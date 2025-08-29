@@ -184,3 +184,6 @@ claude_output_*.txt
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Data
+data/

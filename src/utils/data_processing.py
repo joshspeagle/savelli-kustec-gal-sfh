@@ -44,7 +44,7 @@ def load_iyer_data(sim_name_list=None, data_path=None):
         Dictionary containing SFH data for each simulation
     """
     if data_path is None:
-        data_path = get_data_path() / "Iyer_etal_2020"
+        data_path = get_data_path() / "Iyer_etal_2020_SFH_data"
     else:
         data_path = Path(data_path)
     
@@ -147,7 +147,7 @@ def load_zoom_data(data_path=None):
         Dictionary containing zoom SFH data for each simulation
     """
     if data_path is None:
-        data_path = get_data_path() / "Iyer_etal_2020"
+        data_path = get_data_path() / "Iyer_etal_2020_SFH_data"
     else:
         data_path = Path(data_path)
     
