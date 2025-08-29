@@ -107,7 +107,16 @@ def boxing(x, y, z, n=10, average=False, q=None, axis=0, ess=False):
             
             avg.append(box)
 
-    avg = np.reshape(np.array(avg), new_shape)
+    # Use object array to handle variable-length arrays
+    if q is not None:
+        avg = np.reshape(np.array(avg), new_shape)
+    else:
+        # Create object array for variable-length data
+        result = np.empty((n, n), dtype=object)
+        for i in range(n):
+            for j in range(n):
+                result[i, j] = avg[i * n + j]
+        avg = result
     
     return avg
 

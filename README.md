@@ -16,7 +16,7 @@ This repository provides a comprehensive analysis of star formation histories (S
 
 ## Repository Structure
 
-```
+```bash
 savelli-kustec-gal-sfh/
 ├── README.md                    # This file
 ├── requirements.txt             # Python dependencies
