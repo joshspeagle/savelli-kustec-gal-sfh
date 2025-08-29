@@ -1,5 +1,7 @@
 # Star Formation History Analysis
 
+WARNING: THIS README IS GENERATED USING CLAUDE CODE AND CONTAINS SOME HALLUCINATIONS. THESE WILL BE CLEANED UP ONCE REFACTORING IS DONE.
+
 Repository containing the data and code used in **Savelli & Kustec et al. (in prep.)** - "*Classifying Galaxy Star Formation Histories with Machine Learning*".
 
 ## Overview
@@ -46,17 +48,20 @@ savelli-kustec-gal-sfh/
 ### Setup
 
 1. Clone this repository:
+
    ```bash
    git clone https://github.com/[username]/savelli-kustec-gal-sfh.git
    cd savelli-kustec-gal-sfh
    ```
 
 2. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. Install the package in development mode:
+
    ```bash
    pip install -e .
    ```
@@ -66,13 +71,17 @@ savelli-kustec-gal-sfh/
 The repository includes data from two main sources:
 
 ### 1. Iyer et al. 2020 SFH Data
+
 Star formation histories from multiple cosmological simulations:
+
 - **EAGLE**, **Illustris**, **IllustrisTNG**, **Mufasa**, **Simba**, **SC-SAM**, **UniverseMachine**
 - Located in `data/Iyer_etal_2020/`
 - Original paper: [Iyer et al. 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.498.430I)
 
 ### 2. Autoencoder Results  
+
 Predictions from multimodal autoencoder analysis:
+
 - SFH, SFR, and simulation predictions with/without weights
 - Located in `data/autoencoder_results/`
 - Generated using [Multimodal-Autoencoder](https://github.com/harrypenguin/Multimodal-Autoencoder)
@@ -111,16 +120,19 @@ The analysis is organized into focused notebooks:
 ### Key Analysis Features
 
 #### UMAP Analysis
+
 - Dimensionality reduction of normalized SFHs into 2D embedding space
 - "Battleship grid" visualization (10×10 grid labeled A-J, 1-10)
 - Grid cell averaging and statistical analysis
 
 #### Simulation of Origin Probabilities (SOPs)
+
 - Bayesian classification of galaxies by parent simulation
 - Kernel density estimation in UMAP space
 - Shannon entropy calculations for classification uncertainty
 
 #### Milky Way Analogues
+
 - Observationally Selected Analogues (OSAs) based on stellar mass and SFR
 - Weighted quantile analysis through cosmic time
 - Effective sample size tracking and fraction calculations
@@ -128,18 +140,21 @@ The analysis is organized into focused notebooks:
 ## Key Functions
 
 ### Analysis Functions (`src/utils/analysis.py`)
+
 - `boxing()` - Grid-based data binning and averaging
 - `P_s_x()` - Calculate simulation of origin probabilities  
 - `calc_weights()` - Calculate OSA weights from χ² distributions
 - `quantile()` - Weighted quantile calculations
 
 ### Plotting Functions (`src/utils/plotting.py`)
+
 - `draw_battleship_grid()` - Draw 10×10 labeled grid
 - `draw_grid_A/B/C/D()` - Various multi-panel plot layouts
 - `plot_points()` - Scatter plots with colormapping
 - `plot_averages()` - Grid cell averages with embedded SFH plots
 
 ### Data Processing (`src/utils/data_processing.py`)
+
 - `load_iyer_data()` - Load simulation SFH data from .mat files
 - `load_autoencoder_data()` - Load autoencoder predictions from .npy files  
 - `apply_mass_cuts()` - Apply stellar mass cuts to simulations
@@ -173,6 +188,7 @@ If you use this code or data in your research, please cite:
 ```
 
 Also cite the original data source:
+
 ```bibtex
 @article{iyer2020cosmic,
   title={The Cosmic Baryon and Metal Cycles},
@@ -191,6 +207,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact
 
 For questions about the analysis or code, please contact:
+
 - [Primary Author Name] - [email]
 - [Secondary Author Name] - [email]
 
