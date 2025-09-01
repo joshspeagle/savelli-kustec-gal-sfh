@@ -32,11 +32,11 @@ colors = {'EAGLE':'limegreen', 'Illustris':'deepskyblue','IllustrisTNG':'royalbl
           'Mufasa':'darkorange', 'Simba':'gold', 
           'SC-SAM':'hotpink', 'UniverseMachine':'darkorchid'}
 
-zoom_name = np.array(['FIRE-2', 'g14', 'MarvelJL'])
+zoom_name = np.array(['FIRE-2', 'g14', 'Marvel_JL'])
 
-zoom_colors = {'FIRE-2': 'r', 'g14': 'g', 'MarvelJL': 'b'}
+zoom_colors = {'FIRE-2': 'r', 'g14': 'g', 'Marvel_JL': 'b'}
 
-zoom_markers = {'FIRE-2': '^', 'g14': 'P', 'MarvelJL': '*'}
+zoom_markers = {'FIRE-2': '^', 'g14': 'P', 'Marvel_JL': '*'}
 
 # =============================================================================
 # Utility Functions
