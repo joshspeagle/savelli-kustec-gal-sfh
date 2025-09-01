@@ -186,4 +186,4 @@ claude_output_*.txt
 .cursorindexingignore
 
 # Data
-data/
+data/Iyer_etal_2020_SFH_data/*
