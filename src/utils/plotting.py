@@ -11,6 +11,7 @@ from matplotlib.colors import (
     Normalize,
     LogNorm,
 )
+from matplotlib import cm
 
 from .analysis import sim_name, sim_name_short, times
 
@@ -928,3 +929,93 @@ def plot_sop_contours(p_s_x, sim_name, colors, fig, ax, cax=None, label=None):
         cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cm.viridis), cax=cax)
         cbar.set_label(label, fontsize=20)
         cbar.ax.tick_params(labelsize=20)
+
+
+def plot_entropy_contours(
+    entropy, fig, ax, cax=None, cmap=cm.viridis, extend="neither", label=None
+):
+    """
+    Plot Shannon entropy contours.
+
+    Parameters
+    ----------
+    entropy : numpy.ndarray
+        2D array of entropy values (100x100 grid)
+    fig : matplotlib.figure.Figure
+        Figure object
+    ax : matplotlib.axes.Axes
+        Axes object for the contour plot
+    cax : matplotlib.axes.Axes, optional
+        Axes object for colorbar
+    cmap : matplotlib.colors.Colormap, optional
+        Colormap for contour plot
+    extend : str, optional
+        How to extend the color scale (e.g., 'neither', 'both', 'min', 'max')
+    label : str, optional
+        Label for colorbar
+    """
+
+    # Create meshgrid for contour coordinates
+    # Note: assumes 100x100 mesh
+    x = np.arange(entropy.shape[1]) * 10 / 99
+    y = np.arange(entropy.shape[0]) * 10 / 99
+    X, Y = np.meshgrid(x, y)
+
+    # Set contour levels - entropy ranges from 0 to log2(7) ≈ 2.807
+    max_entropy = np.log2(7)  # Maximum possible entropy for 7 simulations
+    levels = np.linspace(0, max_entropy, 20)
+
+    # Plot filled contours
+    cs = ax.contourf(
+        X,
+        Y,
+        entropy,
+        levels=levels,
+        cmap=cmap,
+        extend=extend,
+        extent=[0, 10, 0, 10],
+    )
+
+    # Add contour lines for better readability
+    cs_lines = ax.contour(
+        X,
+        Y,
+        entropy,
+        levels=levels[::3],  # Fewer contour lines
+        colors="white",
+        linewidths=0.5,
+        alpha=0.7,
+        extent=[0, 10, 0, 10],
+    )
+
+    # Set axis properties
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
+    ax.set_aspect("equal")
+
+    # Add colorbar if requested
+    if cax is not None and label is not None:
+        norm = Normalize(vmin=0, vmax=max_entropy)
+        cbar = fig.colorbar(cs, cax=cax)
+        cbar.set_label(label, fontsize=20)
+        cbar.ax.tick_params(labelsize=20)
+
+        # Add entropy interpretation labels
+        cbar.ax.text(
+            0.1,
+            -0.06,
+            "Low (certain)",
+            transform=cbar.ax.transAxes,
+            fontsize=12,
+            ha="left",
+            va="center",
+        )
+        cbar.ax.text(
+            0.1,
+            1.03,
+            "High (uncertain)",
+            transform=cbar.ax.transAxes,
+            fontsize=12,
+            ha="left",
+            va="center",
+        )
