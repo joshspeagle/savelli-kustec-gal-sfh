@@ -513,7 +513,19 @@ def plot_points(
         cbar.set_label(label, fontsize=20)
 
 
-def plot_averages(avg, avg_sfh, fig, ax1, ax2, umaps, cmap, norm, ftype="f"):
+def plot_averages(
+    avg,
+    avg_sfh,
+    fig,
+    ax1,
+    ax2,
+    umaps,
+    cmap,
+    norm,
+    ftype="f",
+    plot_text=True,
+    plot_cells=True,
+):
     """
     Draw "average" plot in battleship grid.
 
@@ -537,6 +549,10 @@ def plot_averages(avg, avg_sfh, fig, ax1, ax2, umaps, cmap, norm, ftype="f"):
         Colorbar normalization
     ftype : str, default='f'
         Number format type ('f', 'e')
+    plot_text : bool, default=True
+        Whether to plot text values in ax1
+    plot_cells : bool, default=True
+        Whether to plot cell values in ax1
     """
     # avg plots
     for i in range(10):
@@ -551,8 +567,11 @@ def plot_averages(avg, avg_sfh, fig, ax1, ax2, umaps, cmap, norm, ftype="f"):
             # plot average cell value
             count = len(umaps[i, j])
             if count >= 100:
-                ax1.fill([x0, x0 + 1, x0 + 1, x0], [y0, y0, y0 + 1, y0 + 1], fc=colour)
-                if ftype == "e":
+                if plot_cells:
+                    ax1.fill(
+                        [x0, x0 + 1, x0 + 1, x0], [y0, y0, y0 + 1, y0 + 1], fc=colour
+                    )
+                if plot_text and ftype == "e":
                     s = f"{avg[i,j]:.0e}"
                     fontsize = 14
                     if s[-3] == "+":
@@ -599,7 +618,7 @@ def plot_averages(avg, avg_sfh, fig, ax1, ax2, umaps, cmap, norm, ftype="f"):
                                 c="k",
                                 fontsize=fontsize - 2,
                             )
-                elif ftype == "f":
+                elif plot_text and ftype == "f":
                     digits = -int(np.floor(np.log10(np.abs(avg[i, j])))) + (3 - 1)
                     if is_dark(colour):
                         ax1.text(
@@ -621,7 +640,7 @@ def plot_averages(avg, avg_sfh, fig, ax1, ax2, umaps, cmap, norm, ftype="f"):
                             c="k",
                             fontsize=16,
                         )
-                else:
+                elif plot_text:
                     print("I only know format types f, e")
 
                 # plot avg SFHs
@@ -833,3 +852,79 @@ def plot_acc(acc, fig, ax, cmap, left=True, zero=False):
                         c="k",
                         fontsize=20,
                     )
+
+
+def plot_sop_contours(p_s_x, sim_name, colors, fig, ax, cax=None, label=None):
+    """
+    Plot simulation origin probability contours.
+
+    Parameters
+    ----------
+    p_s_x : dict
+        Dictionary of simulation origin probabilities for each simulation
+    sim_name : list
+        List of simulation names
+    colors : dict
+        Dictionary of colors for each simulation
+    fig : matplotlib.figure.Figure
+        Figure object
+    ax : matplotlib.axes.Axes
+        Axes object for the contour plot
+    cax : matplotlib.axes.Axes, optional
+        Axes object for colorbar
+    label : str, optional
+        Label for colorbar
+    """
+    import numpy as np
+    from matplotlib.colors import to_rgba, LinearSegmentedColormap
+
+    # Stack probabilities and clean data
+    p_stack = np.array([p_s_x[sim].T for sim in sim_name])
+    p_stack = np.nan_to_num(p_stack, nan=0.0)
+    p_stack /= np.max(p_stack)
+
+    # Find dominant simulation in each cell
+    max_idx = np.argmax(p_stack, axis=0)
+
+    # Create meshgrid for contour coordinates
+    # Note: assumes 100x100 mesh (p_stack.shape = [n_sims, 100, 100])
+    x = np.arange(p_stack.shape[2]) * 10 / 99
+    y = np.arange(p_stack.shape[1]) * 10 / 99
+    X, Y = np.meshgrid(x, y)
+
+    # Contour levels
+    levels = np.linspace(0.001, 1, 10)
+
+    # Plot contours for each simulation
+    for i, sim in enumerate(sim_name):
+        mask = max_idx == i
+        P_masked = np.where(mask, p_stack[i], 0)
+
+        if np.any(mask):
+            # Create custom colormap: transparent to base color
+            base_rgba = to_rgba(colors[sim])
+            cmap = LinearSegmentedColormap.from_list(
+                f"{sim}_cmap",
+                [(0, (base_rgba[0], base_rgba[1], base_rgba[2], 0)), (1, base_rgba)],
+            )
+
+            cs = ax.contourf(
+                X,
+                Y,
+                P_masked,
+                levels=levels,
+                cmap=cmap,
+                extend="max",
+                extent=[0, 10, 0, 10],
+            )
+
+    # Add colorbar if requested
+    if cax is not None and label is not None:
+        # Use a simple colormap for the colorbar
+        from matplotlib.colors import Normalize
+        from matplotlib import cm
+
+        norm = Normalize(vmin=0, vmax=1)
+        cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cm.viridis), cax=cax)
+        cbar.set_label(label, fontsize=20)
+        cbar.ax.tick_params(labelsize=20)
