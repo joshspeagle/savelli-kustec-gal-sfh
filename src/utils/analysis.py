@@ -165,7 +165,9 @@ def P_x_s(x, s, umaps):
     return p_x_s
 
 
-def P_s_x(x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False):
+def P_s_x(
+    x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False, log_space=True
+):
     """
     Simulation of origin probabilities -- probability of simulation s given position x.
 
@@ -187,6 +189,9 @@ def P_s_x(x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False):
         If false, use equal 1/7 for all sims
     mask : bool, default=False
         SM cut at 10^10 MSun for all simulations
+    log_space : bool, default=True
+        If true, perform calculations in log-space for numerical stability
+        If false, use original linear-space calculations
 
     Returns
     -------
@@ -194,6 +199,16 @@ def P_s_x(x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False):
         Probabilities
     """
 
+    if log_space:
+        return _P_s_x_logspace(x, sim_name, sim_data, umaps, normint, bias, mask)
+    else:
+        return _P_s_x_linear(x, sim_name, sim_data, umaps, normint, bias, mask)
+
+
+def _P_s_x_linear(x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False):
+    """
+    Original linear-space implementation of simulation origin probabilities.
+    """
     # Probability of coming from any one simulation is equal
     p_s = dict.fromkeys(sim_name)
     # Probability of position x given simulation s
@@ -230,6 +245,74 @@ def P_s_x(x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False):
     p_s_x = dict.fromkeys(sim_name)
     for sim in sim_name:
         p_s_x[sim] = (p_x_s[sim] * p_s[sim]) / p_x
+
+    return p_s_x
+
+
+def _P_s_x_logspace(x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False):
+    """
+    Log-space implementation of simulation origin probabilities for numerical stability.
+    """
+
+    def log_sum_exp(log_probs_array):
+        """Numerically stable log-sum-exp computation."""
+        max_log = np.nanmax(log_probs_array, axis=0)
+        # Handle case where all values are -inf or nan
+        valid_mask = np.isfinite(max_log)
+        result = np.full_like(max_log, -np.inf)
+
+        if np.any(valid_mask):
+            log_sum = np.log(
+                np.nansum(
+                    np.exp(log_probs_array[:, valid_mask] - max_log[valid_mask]), axis=0
+                )
+            )
+            result[valid_mask] = max_log[valid_mask] + log_sum
+
+        return result
+
+    # Log probabilities
+    log_p_s = dict.fromkeys(sim_name)
+    log_p_x_s = dict.fromkeys(sim_name)
+
+    for sim in sim_name:
+        m = sim_data[sim]["sm"] >= 1e10
+        if mask:
+            n_gal = np.sum(m)
+            N_gal = np.sum([np.sum(sim_data[sim]["sm"] >= 1e10) for sim in sim_name])
+            s = sim_data[sim]["umap"][m]
+        else:
+            n_gal = sim_data[sim]["ngal"]
+            N_gal = np.sum([sim_data[sim]["ngal"] for sim in sim_name])
+            s = sim_data[sim]["umap"]
+
+        # Log probability of coming from a given simulation
+        if bias:
+            log_p_s[sim] = np.log(n_gal / N_gal) if n_gal > 0 else -np.inf
+        else:
+            log_p_s[sim] = np.log(1 / 7)
+
+        # Log probability of position x given simulation s
+        p_x_s_linear = P_x_s(x, s, umaps)
+        if normint:
+            p_x_s_linear *= n_gal / N_gal
+
+        # Convert to log space, handling zeros and small values
+        log_p_x_s[sim] = np.where(p_x_s_linear > 0, np.log(p_x_s_linear), -np.inf)
+
+    # Log probability of position x (log-sum-exp over simulations)
+    log_numerators = np.array([log_p_x_s[sim] + log_p_s[sim] for sim in sim_name])
+    log_p_x = log_sum_exp(log_numerators)
+
+    # Log simulation origin probabilities (Bayes' theorem in log-space)
+    p_s_x = dict.fromkeys(sim_name)
+
+    for sim in sim_name:
+        # log P(s|x) = log P(x|s) + log P(s) - log P(x)
+        log_p_s_x_sim = log_p_x_s[sim] + log_p_s[sim] - log_p_x
+
+        # Convert back to linear space
+        p_s_x[sim] = np.where(np.isfinite(log_p_s_x_sim), np.exp(log_p_s_x_sim), 0.0)
 
     return p_s_x
 

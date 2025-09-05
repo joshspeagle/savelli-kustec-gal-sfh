@@ -96,50 +96,146 @@ def load_iyer_data(sim_name_list=None, data_path=None):
     return sim_data
 
 
-def load_autoencoder_data(data_path=None):
+def load_autoencoder_data(sim_data, data_path=None):
     """
     Load autoencoder prediction results from .npy files.
 
+    The autoencoder predictions are stored in a different order (sim_name_z) than
+    the standard analysis order (sim_name). This function reorders the predictions
+    to align with the standard sim_name ordering.
+
+    sim_data is required to know the number of galaxies per simulation.
+
     Parameters
     ----------
+    sim_data : dict
+        Simulation data dictionary (needed for galaxy counts)
     data_path : str or Path, optional
         Path to autoencoder data directory. If None, uses default data path.
 
     Returns
     -------
     ae_data : dict
-        Dictionary containing autoencoder predictions
+        Dictionary containing autoencoder predictions with both:
+        - Raw arrays (predictions_sim, predictions_sim_w, etc.) reordered to sim_name order
+        - Structured data split by simulation (sm, sfr, sfh dictionaries)
     """
     if data_path is None:
         data_path = get_data_path() / "autoencoder_results"
     else:
         data_path = Path(data_path)
 
-    ae_data = {}
+    # Load raw prediction files
+    raw_files = {
+        "predictions_sfh": "predictions_sfh.npy",
+        "predictions_sfh_w": "predictions_sfh_w.npy",
+        "predictions_sfr": "predictions_sfr.npy",
+        "predictions_sfr_w": "predictions_sfr_w.npy",
+        "predictions_sim": "predictions_sim.npy",
+        "predictions_sim_w": "predictions_sim_w.npy",
+    }
 
-    # List of expected files
-    expected_files = [
-        "predictions_sfh.npy",
-        "predictions_sfh_w.npy",
-        "predictions_sfr.npy",
-        "predictions_sfr_w.npy",
-        "predictions_sim.npy",
-        "predictions_sim_w.npy",
-    ]
-
-    for filename in expected_files:
+    raw_data = {}
+    for key, filename in raw_files.items():
         filepath = data_path / filename
         if filepath.exists():
             try:
-                data = np.load(filepath)
-                # Remove file extension and use as key
-                key = filename.replace(".npy", "")
-                ae_data[key] = data
-                print(f"Loaded {filename}: shape {data.shape}")
+                raw_data[key] = np.load(filepath)
+                print(f"Loaded {filename}: shape {raw_data[key].shape}")
             except Exception as e:
                 print(f"Error loading {filename}: {e}")
         else:
             print(f"File not found: {filepath}")
+
+    # Import sim_name from analysis module
+    from .analysis import sim_name
+
+    # Autoencoder predictions are ordered by this sequence (different from sim_name)
+    sim_name_z = np.array(
+        [
+            "EAGLE",
+            "Mufasa",
+            "SC-SAM",
+            "Simba",
+            "Illustris",
+            "IllustrisTNG",
+            "UniverseMachine",
+        ]
+    )
+
+    ae_data = {}
+
+    # Reorder all predictions to match sim_name order (matching original notebook)
+    print("Reordering predictions from sim_name_z to sim_name order...")
+
+    if all(key in raw_data for key in raw_files.keys()):
+        # Extract predictions for each simulation in sim_name order
+        reordered_predictions = {}
+
+        for pred_type in raw_files.keys():
+            reordered_list = []
+
+            for sim in sim_name:  # Use standard sim_name order
+                # Find index of this simulation in sim_name_z
+                idx = np.where(sim_name_z == sim)[0][0]
+
+                # Calculate range for this simulation in the flat arrays
+                n1 = 0
+                for j in range(idx):
+                    if sim_data[sim_name_z[j]] is not None:
+                        n1 += sim_data[sim_name_z[j]]["ngal"]
+                n2 = n1 + sim_data[sim]["ngal"]
+
+                # Extract this simulation's predictions
+                reordered_list.append(raw_data[pred_type][n1:n2])
+
+            # Stack all simulations back together in sim_name order
+            reordered_predictions[pred_type] = np.vstack(reordered_list)
+
+        # Store reordered raw predictions
+        for key, data in reordered_predictions.items():
+            # For simulation predictions, also reorder columns to match sim_name order
+            if key in ["predictions_sim", "predictions_sim_w"]:
+                # Create mapping from sim_name_z to sim_name order
+                col_reorder = []
+                for sim in sim_name:
+                    col_reorder.append(np.where(sim_name_z == sim)[0][0])
+
+                # Reorder columns
+                ae_data[key] = data[:, col_reorder]
+                print(
+                    f"Reordered {key}: shape {data.shape}, columns reordered to sim_name"
+                )
+            else:
+                ae_data[key] = data
+                print(f"Reordered {key}: shape {data.shape}")
+
+        # Also create structured data split by simulation
+        ae_data["sm"] = {}
+        ae_data["sfr"] = {}
+        ae_data["sfh"] = {}
+        ae_data["sm_w"] = {}
+        ae_data["sfr_w"] = {}
+        ae_data["sfh_w"] = {}
+
+        # Split reordered data by simulation
+        n1 = 0
+        for sim in sim_name:
+            if sim_data[sim] is not None:
+                n2 = n1 + sim_data[sim]["ngal"]
+
+                ae_data["sm"][sim] = ae_data["predictions_sfr"][n1:n2, 0]
+                ae_data["sfr"][sim] = ae_data["predictions_sfr"][n1:n2, 1]
+                ae_data["sfh"][sim] = ae_data["predictions_sfh"][n1:n2]
+                ae_data["sm_w"][sim] = ae_data["predictions_sfr_w"][n1:n2, 0]
+                ae_data["sfr_w"][sim] = ae_data["predictions_sfr_w"][n1:n2, 1]
+                ae_data["sfh_w"][sim] = ae_data["predictions_sfh_w"][n1:n2]
+
+                n1 = n2
+
+                print(f"Split {sim}: {ae_data['sm'][sim].shape[0]} galaxies")
+    else:
+        print("Error: Missing required prediction files")
 
     return ae_data
 

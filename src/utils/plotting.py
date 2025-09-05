@@ -353,39 +353,27 @@ def draw_grid_C(cmap=None, vmin=None, vmax=None, lognorm=False, cbar=True):
 
 
 def draw_grid_D(
-    cmap1=None,
-    vmin1=None,
-    vmax1=None,
-    lognorm1=False,
+    cmap=None,
+    vmin=None,
+    vmax=None,
+    lognorm=False,
     cbar=True,
-    cmap2=None,
-    vmin2=None,
-    vmax2=None,
-    lognorm2=False,
 ):
     """
-    Draw grid type D, for displaying six battleship plots in 2 rows.
+    Draw grid type D, for displaying six battleship plots in 2 rows with single spanning colorbar.
 
     Parameters
     ----------
-    cmap1 : colormap, optional
-        Colormap for top row
-    vmin1 : float, optional
-        Minimum value for top row colorbar
-    vmax1 : float, optional
-        Maximum value for top row colorbar
-    lognorm1 : bool, default=False
-        Use log normalization for top row colorbar
+    cmap : colormap, optional
+        Colormap for all plots
+    vmin : float, optional
+        Minimum value for colorbar
+    vmax : float, optional
+        Maximum value for colorbar
+    lognorm : bool, default=False
+        Use log normalization for colorbar
     cbar : bool, default=True
-        Show colorbars
-    cmap2 : colormap, optional
-        Colormap for bottom row
-    vmin2 : float, optional
-        Minimum value for bottom row colorbar
-    vmax2 : float, optional
-        Maximum value for bottom row colorbar
-    lognorm2 : bool, default=False
-        Use log normalization for bottom row colorbar
+        Show colorbar
 
     Returns
     -------
@@ -393,18 +381,15 @@ def draw_grid_D(
         Figure object
     axs : list
         List of axes objects
-    norm : list
-        List of color normalization objects
+    norm : matplotlib.colors.Normalize
+        Color normalization object
     """
 
     # Color normalization
-    if lognorm1:
-        norm1 = LogNorm(vmin=vmin1, vmax=vmax1)
-        norm2 = LogNorm(vmin=vmin2, vmax=vmax2)
+    if lognorm:
+        norm = LogNorm(vmin=vmin, vmax=vmax)
     else:
-        norm1 = Normalize(vmin=vmin1, vmax=vmax1)
-        norm2 = LogNorm(vmin=vmin2, vmax=vmax2)
-    norm = [norm1, norm2]
+        norm = Normalize(vmin=vmin, vmax=vmax)
 
     # Main figure and subfigures
     fig = plt.figure(figsize=(15, 15))
@@ -419,13 +404,11 @@ def draw_grid_D(
     ax5 = fig.add_axes([0.35, 0.1, 0.3, 0.3])
     ax6 = fig.add_axes([0.65, 0.1, 0.3, 0.3])
     if cbar:
-        cax1 = fig.add_axes([0.98, 0.4, 0.03, 0.3])  # Colorbar axis
-        cax2 = fig.add_axes([0.98, 0.1, 0.03, 0.3])
+        cax = fig.add_axes([0.98, 0.1, 0.03, 0.6])  # Spanning colorbar axis
     else:
-        cax1 = None
-        cax2 = None
+        cax = None
 
-    axs = [ax1, ax2, ax3, cax1, ax4, ax5, ax6, cax2]
+    axs = [ax1, ax2, ax3, ax4, ax5, ax6, cax]
 
     draw_battleship_grid(ax1, labelright=False, labelbottom=False)
     draw_battleship_grid(ax2, labelleft=False, labelright=False, labelbottom=False)
