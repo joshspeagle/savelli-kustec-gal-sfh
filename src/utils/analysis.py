@@ -239,7 +239,7 @@ def P_s_x(x, sim_name, sim_data, umaps, normint=True, bias=False, mask=False):
 # =============================================================================
 
 
-def calc_pdf(data1, data2=None):
+def calc_pdf(data1, data2=None, apply_log=True):
     """
     Calculate pdf from 1 or 2 dimensional gaussian KDE.
 
@@ -249,6 +249,8 @@ def calc_pdf(data1, data2=None):
         Input data.
     data2 : array_like, optional
         Input data for optional 2nd dimension.
+    apply_log : bool, default=True
+        Apply log10 to data before calculating pdf.
 
     Returns
     -------
@@ -256,15 +258,19 @@ def calc_pdf(data1, data2=None):
         The calculated pdf.
     """
 
-    # log data
-    if data2 is None:
-        logged_data = np.log10([data1])
+    # Log data
+    if apply_log:
+        if data2 is None:
+            logged_data = np.log10([data1])
+        else:
+            logged_data = np.log10(np.c_[data1, data2].T)
     else:
-        logged_data = np.log10(np.c_[data1, data2].T)
-    # calculate pdf
-    pdf = gaussian_kde(logged_data[:, np.all(np.isfinite(logged_data), axis=0)]).pdf(
-        logged_data
-    )
+        logged_data = np.c_[data1, data2].T
+
+    # Calculate pdf
+    pdf = np.zeros(logged_data.shape[1])
+    sel = np.all(np.isfinite(logged_data), axis=0)
+    pdf[sel] = gaussian_kde(logged_data[:, sel]).pdf(logged_data[:, sel])
     pdf[pdf <= 0] = np.nan  # replace -inf with nan
 
     return pdf

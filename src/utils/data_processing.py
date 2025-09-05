@@ -477,8 +477,8 @@ def get_milky_way_values():
         Dictionary of Milky Way properties
     """
     return {
-        "stellar_mass": 5e10,  # Solar masses
-        "stellar_mass_error": 1e10,
+        "stellar_mass": 6.08e10,  # Solar masses (MW observational constraints)
+        "stellar_mass_error": 1.14e10,
         "sfr": 1.65,  # Solar masses per year
         "sfr_error": 0.19,
         "metallicity": 0.0,  # Solar metallicity

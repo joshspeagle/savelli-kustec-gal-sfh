@@ -523,9 +523,11 @@ def plot_averages(
     umaps,
     cmap,
     norm,
+    cax=None,
     ftype="f",
     plot_text=True,
     plot_cells=True,
+    label=None,
 ):
     """
     Draw "average" plot in battleship grid.
@@ -548,12 +550,16 @@ def plot_averages(
         Colormap
     norm : matplotlib.colors.Normalize
         Colorbar normalization
+    cax : matplotlib.axes.Axes, optional
+        Colorbar axis location
     ftype : str, default='f'
         Number format type ('f', 'e')
     plot_text : bool, default=True
         Whether to plot text values in ax1
     plot_cells : bool, default=True
         Whether to plot cell values in ax1
+    label : str, optional
+        Label for colorbar
     """
     # avg plots
     for i in range(10):
@@ -652,6 +658,16 @@ def plot_averages(
                     times, avg_sfh[i, j][0], avg_sfh[i, j][2], color=colour, alpha=0.3
                 )
                 ins.set_ylim(10**-12.9, 10**-9.1)  # same as fig 2
+
+    # Add colorbar if cax is provided
+    if cax is not None:
+        import matplotlib as mpl
+
+        im = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+        cbar = fig.colorbar(im, cax=cax)
+        cbar.ax.tick_params(labelsize=20)
+        if label:
+            cbar.set_label(label, fontsize=20)
 
 
 def plot_cm(cm, fig, ax, cmap, title=None, left=True, zero=False):

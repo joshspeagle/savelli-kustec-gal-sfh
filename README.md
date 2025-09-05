@@ -40,7 +40,7 @@ While most data is available through the repo and managed with Git LFS, the orig
 
 Predictions from multimodal autoencoder analysis:
 
-- SFH, SFR, and simulation predictions with/without number countt-based weights
+- SFH, SFR, and simulation predictions with/without number count-based weights
 
 These were generated using [this implementation](https://github.com/harrypenguin/Multimodal-Autoencoder) and are described in more detail in the main text.
 
