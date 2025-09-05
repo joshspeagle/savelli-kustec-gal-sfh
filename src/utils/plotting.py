@@ -511,6 +511,7 @@ def plot_averages(
     plot_text=True,
     plot_cells=True,
     label=None,
+    decimals=None,
 ):
     """
     Draw "average" plot in battleship grid.
@@ -543,6 +544,8 @@ def plot_averages(
         Whether to plot cell values in ax1
     label : str, optional
         Label for colorbar
+    decimals : int, optional
+        Number of decimal places to show in grid text labels
     """
     # avg plots
     for i in range(10):
@@ -609,7 +612,10 @@ def plot_averages(
                                 fontsize=fontsize - 2,
                             )
                 elif plot_text and ftype == "f":
-                    digits = -int(np.floor(np.log10(np.abs(avg[i, j])))) + (3 - 1)
+                    if decimals is not None:
+                        digits = decimals
+                    else:
+                        digits = -int(np.floor(np.log10(np.abs(avg[i, j])))) + (3 - 1)
                     if is_dark(colour):
                         ax1.text(
                             i + 0.5,
